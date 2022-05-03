@@ -1,0 +1,28 @@
+def main ():
+let a,b,c : integer; d,e : float in {
+''' esto es un comentario '''
+
+######aaaaa#aaaaa Comentario inválido
+
+def sumar (x,y: integer; resul: & integer):
+let aux, vueltas: integer in {
+    aux:= x; '''asignacion que no cumple con las características'''
+    if resul < 1000: {
+        vueltas = 0;
+        while aux == 0: { 
+            resul = resul + 1;
+            break if resul > 100000;
+            aux = aux - 1;
+            vueltas = vueltas + 1;
+        } ''' no tiene el bloque else'''
+    } # acaba if
+    println(vueltas);
+} # acaba def sumar -let
+read(a); read(b);
+d = 1/b;
+sumar(a,b,c); ''' los que hagan llamadas a procedimientos '''
+c = c*(c*d)+e;
+println(c);
+} # acaba def main -let
+  
+

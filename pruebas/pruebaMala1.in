@@ -1,0 +1,20 @@
+def main ( ):
+
+let a,b, c : integer; d,e: float in {
+
+	def sumar (x,y : integer; resul: & integer):
+      let aux, vueltas: integer in {	
+		
+      aux := y; '''asignacion incorrecta''' 
+	   	resul = x;
+        while aux+resul> 2000: {
+            aux= aux - 2;
+            resul = resul + 1;
+            break if aux < 1000;
+        } else: {
+            aux = 0;
+            println(resul);
+        }
+    }
+
+'''falta cerrar el programa principal'''

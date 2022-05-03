@@ -1,0 +1,42 @@
+def main ( ):
+
+let a,b, c : integer; d,e: float in {
+''' esto es un '
+ comentario multilinea '''
+	def sumar (x,y : integer; resul: & integer):
+        let aux, vueltas: integer in {	
+		aux = y;
+	   	resul = x;
+        while aux+resul> 2000: {
+            aux= aux - 2;
+            resul = resul + 1;
+            break if aux < 1000;
+        } else: {
+            aux = 0;
+            println(resul);
+        }
+    }
+
+    '''declaramos otra funcion'''
+    def otraFuncion (variable : integer):
+    let otraVariable, i: integer in {
+        i = 0;
+        otraVariable = variable;
+        if otraVariable > 30: {
+            while i <= 30: {
+                otraVariable = otraVariable + i;
+                i = i + 1;
+            } else : {
+                otraVariable = otraVariable - i;
+
+            }
+        }
+    }   #aqui acaba la función OTRAFUNCION           
+    
+   
+   read(a); read(b);
+   d = 1/b;
+   e = 0.1e-1/a;
+   c = c*(c*d)+e;
+   println(c*c);
+} # fin del main
