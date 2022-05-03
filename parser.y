@@ -31,16 +31,6 @@
 %token <str> TEQUAL TMAYOR TMENOR TMAYOREQ TMENOREQ TNOTEQUAL
 %token <str> TPLUS TMINUS TMUL TDIV
 
-%left TMUL
-%left TPLUS
-%left TMINUS
-%left TDIV
-%left TEQUAL
-%left TMAYOR
-%left TMENOR
-%left TMENOREQ
-%left TMAYOREQ
-%left TNOTEQUAL
 
 %type <str> programa
 %type <str> bloque_ppl
@@ -60,6 +50,11 @@
 %type <str> sentencia
 %type <str> variable
 %type <str> expresion
+
+//Prioridad y asociatividad de los operadores
+%nonassoc TASSIG TNOTEQUAL TMENOR TMENOREQ TMAYOR TMAYOREQ
+%left TPLUS TMINUS
+%left TMUL TDIV
 
 %start programa
 %%

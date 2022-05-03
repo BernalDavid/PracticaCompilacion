@@ -18,8 +18,8 @@
 %%
 def                     TOKEN(RDEF) ;
 main                    TOKEN(RMAIN);
-comienzo                TOKEN(RBEGIN) ;
-fin	                    TOKEN(RENDPROGRAM) ;
+let                     TOKEN(RLET);
+in                      TOKEN(RIN);
 if                      TOKEN(RIF);
 else                    TOKEN(RELSE);
 while                   TOKEN(RWHILE);
@@ -28,24 +28,21 @@ break                   TOKEN(RBREAK);
 continue                TOKEN(RCONTINUE);
 read                    TOKEN(RREAD);
 println                 TOKEN(RPRINT);
-let                     TOKEN(RLET);
-in                      TOKEN(RIN);
 integer                 TOKEN(RINTEGER);
 float                   TOKEN(RFLOAT);
 
 
-"="                     TOKEN(TASSIG);
 ";"                     TOKEN(TSEMIC);
 ":"                     TOKEN(TDOSPUNTOS);
 ","                     TOKEN(TCOMA);
 
 '''[^#]*[\n]*[^#]*'''   ;
 
-#[^#]*\n                ;
+#[^#]*[\n]+               ;
 
 [ \t\n]                 ;
 
-[a-zA-Z][a-zA-Z0-9]*                    TOKEN(TIDENTIFIER) ; 
+[a-zA-Z][a-zA-Z0-9]*([_]?[a-zA-Z0-9])*  TOKEN(TIDENTIFIER) ; 
 [0-9]+[.][0-9]+([eE][+-]?[0-9]+)?       TOKEN(TDOUBLE);
 [0-9]+                                  TOKEN(TINTEGER);
 
@@ -55,6 +52,7 @@ float                   TOKEN(RFLOAT);
 ")"                     TOKEN(TPAREND);
 "&"                     TOKEN(TAND);
 
+"="                     TOKEN(TASSIG);
 "=""="                  TOKEN(TEQUAL);
 ">"                     TOKEN(TMAYOR);
 "<"                     TOKEN(TMENOR);
