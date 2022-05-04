@@ -14,11 +14,17 @@
 
 %}
 
+/* Funciones que se usan*/
+ estructuraExpresion comparar(std::string &s1, std::string &s2, std::string &s3) ;
+ estructuraExpresion operar(std::string &s1, std::string &s2, std::string &s3) ;
 /* 
    qué atributos tienen los tokens 
 */
 %union {
     string *str ; 
+    estructuraExpresion *expr;
+    estructuraSentencia *sent;
+    
 }
 
 /* 
@@ -46,10 +52,10 @@
 %type <str> lista_de_param
 //%type <str> clase_par
 //%type <str> resto_lis_de_param
-//%type <str> lista_de_sentencias
+//%type <sent> lista_de_sentencias
 %type <str> sentencia
 %type <str> variable
-%type <str> expresion
+%type <expr> expresion
 
 //Prioridad y asociatividad de los operadores
 %nonassoc TASSIG TNOTEQUAL TMENOR TMENOREQ TMAYOR TMAYOREQ
@@ -130,20 +136,131 @@ sentencia : variable TASSIG expresion TSEMIC
           ;
 
 variable : TIDENTIFIER
+            {
+               $$= $1;
+            }
          ;
 
 expresion : expresion TEQUAL expresion
+            {
+               $$= new estructuraExpresion;
+               $$->tipo = "comparación";
+               *$$ = comparar($1->str,*$2,$3->str); 
+
+               delete $1; delete $3; 
+            }
           | expresion TMAYOR expresion
+            {
+               $$= new estructuraExpresion;
+               $$->tipo = "comparación";
+               *$$ = comparar($1->str,*$2,$3->str); 
+
+               delete $1; delete $3; 
+            }
           | expresion TMENOR expresion
+            {
+               $$= new estructuraExpresion;
+               $$->tipo = "comparación";
+               *$$ = comparar($1->str,*$2,$3->str); 
+
+               delete $1; delete $3; 
+            }
           | expresion TMAYOREQ expresion
+            {
+               $$= new estructuraExpresion;
+               $$->tipo = "comparación";
+               *$$ = comparar($1->str,*$2,$3->str); 
+
+               delete $1; delete $3; 
+            }
           | expresion TMENOREQ expresion
+            {
+               $$= new estructuraExpresion;
+               $$->tipo = "comparación";
+               *$$ = comparar($1->str,*$2,$3->str); 
+
+               delete $1; delete $3; 
+            }
           | expresion TNOTEQUAL expresion
+            {
+               $$= new estructuraExpresion;
+               $$->tipo = "comparación";
+               *$$ = comparar($1->str,*$2,$3->str); 
+
+               delete $1; delete $3; 
+            }
           | expresion TPLUS expresion
+            {
+               $$= new estructuraExpresion;
+               $$->tipo = "operación aritmética";
+               *$$ = operar($1->str,*$2,$3->str); 
+
+               delete $1; delete $3; 
+            }
           | expresion TMINUS expresion
+            {
+               $$= new estructuraExpresion;
+               $$->tipo = "operación aritmética";
+               *$$ = operar($1->str,*$2,$3->str); 
+
+               delete $1; delete $3; 
+            }
           | expresion TMUL expresion
+            {
+               $$= new estructuraExpresion;
+               $$->tipo = "operación aritmética";
+               *$$ = operar($1->str,*$2,$3->str); 
+
+               delete $1; delete $3; 
+            }
           | expresion TDIV expresion
+            {
+               $$= new estructuraExpresion;
+               $$->tipo = "operación aritmética";
+               *$$ = operar($1->str,*$2,$3->str); 
+
+               delete $1; delete $3; 
+            }
           | TIDENTIFIER
+            {
+               $$= new estructuraExpresion;
+               $$->n= *$1;
+            }
           | TINTEGER
+            {
+               $$= new estructuraExpresion;
+               $$->n= *$1;
+               $$->tipo= "Integer";
+            }
           | TDOUBLE
+            {
+               $$= new estructuraExpresion;
+               $$->n= *$1;
+               $$->tipo= "Double";
+            }
           | TPARENI expresion TPAREND
+            {
+               $$= $2;
+            }
           ;
+%%
+
+estructuraExpresion comparar(std::string &s1, std::string &s2, std::string &s3) {
+  estructuraExpresion tmp ; 
+
+  tmp.trues.push_back(codigo.obtenRef()) ;
+  tmp.falses.push_back(codigo.obtenRef()+1) ;
+
+  codigo.anadirInstruccion("if " + s1 + " " + s2 + " " + s3 + " goto") ;
+  codigo.anadirInstruccion("goto") ;
+  return tmp ;
+}
+
+estructuraExpresion operar(std::string &s1, std::string &s2, std::string &s3) {
+  estructuraExpresion tmp ; 
+
+  tmp.str = codigo.nuevoId() ;
+
+  codigo.anadirInstruccion(tmp.str + " := " + s1 + " " +  s2 + " " +  s3 + ";") ;
+  return tmp ;
+}
