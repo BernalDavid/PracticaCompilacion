@@ -126,13 +126,69 @@ lista_de_sentencias : sentencia lista_de_sentencias
                     ;
 
 sentencia : variable TASSIG expresion TSEMIC
-          | RIF expresion TDOSPUNTOS bloque
-          | RWHILE expresion TDOSPUNTOS bloque RELSE TDOSPUNTOS bloque
-          | RFOREVER TDOSPUNTOS bloque
+            {
+               $$= new estructuraSentencia;
+               codigo.anadirInstruccion(*$1 + " := " + $3->str + ";") ; 
+               $$->exits: * new vector<int>;
+               // o exits.clear() * new vector<int>??
+               $$->tipo = "asignacion";
+               delete $1 ; delete $3;
+            }
+          | RIF expresion TDOSPUNTOS M bloque M
+            {
+               $$ = new estructuraSentencia;
+	      	   codigo.completarInstrucciones($2->trues,$4);
+    	  	      codigo.completarInstrucciones($2->falses,$6);
+	      	   $$->exits = $5->exits;
+               delete $2 ;
+            }
+          | RWHILE M expresion TDOSPUNTOS M bloque N RELSE TDOSPUNTOS M bloque
+            {
+               $$ = new estructuraSentencia;
+	      	   codigo.completarInstrucciones($3->trues,$5);
+    	  	      codigo.completarInstrucciones($3->falses,$10);
+
+               //esto no se lo que es, supuestamente para el N.next??
+               vector<int> tmp1; 
+               tmp1.push_back($7);
+               codigo.completarInstrucciones(tmp1, $2);
+               codigo.completarInstrucciones($6->exits, $7+1);
+               $$->exits.clear();
+               /* No se si es necesario
+                  $$->exits = $11->exits; */
+               delete $4;
+            }
+          | RFOREVER TDOSPUNTOS M bloque M 
+            {
+               $$ = new estructuraSentencia;
+               codigo.anadirInstruccion("goto " + $3);
+               codigo.completarInstrucciones($4, codigo.obtenRef());
+               $$->exits= * new vector<int>;
+            }
           | RBREAK RIF expresion TSEMIC
+            {
+               $$ = new estructuraSentencia;
+               codigo.completarInstrucciones($3->falses, codigo.obtenRef());
+               $$->exits = $3->trues;
+               delete $2;
+            }
           | RCONTINUE TSEMIC
+            /*{
+
+            }*/
           | RREAD TPARENI variable TPAREND TSEMIC
+            {
+               $$ = new estructuraSentencia;
+					$$->exits = * new vector<int>;
+					codigo.anadirInstruccion("read "+ *$3 + ";");
+            }
           | RPRINT TPARENI expresion TPAREND TSEMIC
+            {
+               {$$ = new sentenciastruct;
+					$$->exits = * new vector<int>;
+					codigo.anadirInstruccion("write "+ $3->str + ";");
+					codigo.anadirInstruccion("writeln;");
+            }
           ;
 
 variable : TIDENTIFIER
