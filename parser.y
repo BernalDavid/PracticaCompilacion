@@ -17,6 +17,7 @@
 /* Funciones que se usan*/
  estructuraExpresion comparar(std::string &s1, std::string &s2, std::string &s3) ;
  estructuraExpresion operar(std::string &s1, std::string &s2, std::string &s3) ;
+ vector<int> *unir(vector<int> lis1, vector<int> lis2);
 /* 
    qué atributos tienen los tokens 
 */
@@ -67,6 +68,10 @@
 
 programa : RDEF RMAIN TPARENI TPAREND TDOSPUNTOS  
            bloque_ppl
+            /*{
+               Al $6 le falta algo
+               codigo.anadirInstruccion("def main ():" + $6);
+            }*/
          ;
 
 bloque_ppl : decl_bl TLLAVEI
@@ -78,6 +83,11 @@ bloque_ppl : decl_bl TLLAVEI
 bloque : TLLAVEI
          lista_de_sentencias
          TLLAVED
+         {
+            //Falta continue
+            $$= new estructuraExpresion;
+            $$->exits= $2->exits;
+         }
        ;
 
 decl_bl : RLET declaraciones RIN
@@ -85,18 +95,44 @@ decl_bl : RLET declaraciones RIN
         ;
 
 declaraciones : declaraciones TSEMIC lista_de_ident TDOSPUNTOS tipo
+                  {
+                     //Con * en vez de ->??
+                     codigo.anadirDeclaraciones($3->str, $5->tipo);
+                  }
               | lista_de_ident TDOSPUNTOS tipo
+                  {
+                     //Con * en vez de ->??
+                     codigo.anadirDeclaraciones($1->str, $3->tipo);
+                  }
               ;
 
 lista_de_ident : TIDENTIFIER resto_lista_id
+                  {
+                     $$  = $2 ;
+                     $$->push_back(*$1);
+                  }
+                  // codigo.completarInstrucciones()??
                ;
 
 resto_lista_id : TCOMA TIDENTIFIER resto_lista_id
+                  {
+                     $$  = $3 ;
+                     $$->push_back(*$2);
+                  }
                | /* empty */
+                  {
+                     $$ = new vector<string>;
+                  }
                ;
 
 tipo : RINTEGER
+      { 
+         $$ = new std::string("entero");
+      }
      | RFLOAT
+     { 
+         $$ = new std::string("real");
+      }
      ;
 
 decl_de_subprogs : decl_de_subprograma decl_de_subprogs
@@ -111,18 +147,35 @@ argumentos : TPARENI lista_de_param TPAREND
            ;
 
 lista_de_param : lista_de_ident TDOSPUNTOS clase_par tipo resto_lis_de_param
+                  {
+                     codigo.anadirParametros(*$1, *$3, *$4);
+                     //codigo.anadirParametros($1->str, $3->tipo, $4->tipo);
+                  }
                ;
 
 clase_par : /* empty */
           | TAND
+            { 
+               $$ = new std::string("and");
+            }
           ;
 
 resto_lis_de_param : TSEMIC lista_de_ident TDOSPUNTOS clase_par tipo resto_lis_de_param
+                     {
+                        codigo.anadirParametros(*$2, *$4, *$5);
+                     }
                     | /* empty */
                     ;
 
 lista_de_sentencias : sentencia lista_de_sentencias
+                     {
+                        $$->exits = *unir($1->exits, $2->exits);
+                        //Falta continue
+                     }
                     | /* empty */
+                     {
+                        $$->exits = * new vector<int>;
+                     }
                     ;
 
 sentencia : variable TASSIG expresion TSEMIC
@@ -319,4 +372,13 @@ estructuraExpresion operar(std::string &s1, std::string &s2, std::string &s3) {
 
   codigo.anadirInstruccion(tmp.str + " := " + s1 + " " +  s2 + " " +  s3 + ";") ;
   return tmp ;
+}
+
+vector<int> *unir(vector<int> lis1, vector<int> lis2){
+        vector<int> *aux;
+        aux = new vector<int>(lis1);
+
+        aux->insert(aux->end(), lis2.begin(), lis2.end());
+
+        return aux;
 }
