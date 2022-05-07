@@ -33,7 +33,7 @@
 */
 %token <str> RDEF RMAIN RBEGIN RENDPROGRAM RIF RELSE RWHILE RFOREVER RBREAK RCONTINUE RREAD RPRINT RLET RIN RINTEGER RFLOAT
 %token <str> TSEMIC TASSIG TDOSPUNTOS TCOMA
-%token <str> TIDENTIFIER TINTEGER TDOUBLE
+%token <str> TIDENTIFIER TINTEGER TFLOAT
 %token <str> TLLAVEI TLLAVED TPARENI TPAREND TAND
 %token <str> TEQUAL TMAYOR TMENOR TMAYOREQ TMENOREQ TNOTEQUAL
 %token <str> TPLUS TMINUS TMUL TDIV
@@ -67,26 +67,30 @@
 %%
 
 programa : RDEF RMAIN TPARENI TPAREND TDOSPUNTOS  
-           bloque_ppl
-            /*{
-               Al $6 le falta algo
-               codigo.anadirInstruccion("def main ():" + $6);
-            }*/
+            {
+            codigo.anadirInstruccion("def main ():" + $6);
+            }
+            bloque_ppl {
+            codigo.anadirInstruccion("halt");
+            codigo.esccribir();
+            }
          ;
 
-bloque_ppl : decl_bl TLLAVEI
-            decl_de_subprogs
-            lista_de_sentencias
-            TLLAVED
-           ;
+bloque_ppl  :  decl_bl TLLAVEI
+               decl_de_subprogs
+               lista_de_sentencias
+               TLLAVED
+            ;
 
 bloque : TLLAVEI
          lista_de_sentencias
          TLLAVED
          {
-            //Falta continue
-            $$= new estructuraExpresion;
-            $$->exits= $2->exits;
+         //Falta continue
+         $$= new estructuraExpresion;
+         $$->exits= $2->exits;
+         $$= new estructuraExpresion:
+         $$->continues = $2->continues;
          }
        ;
 
@@ -94,45 +98,45 @@ decl_bl : RLET declaraciones RIN
         | /* empty */
         ;
 
-declaraciones : declaraciones TSEMIC lista_de_ident TDOSPUNTOS tipo
+declaraciones :   declaraciones TSEMIC lista_de_ident TDOSPUNTOS tipo
                   {
-                     //Con * en vez de ->??
                      codigo.anadirDeclaraciones($3->str, $5->tipo);
                   }
-              | lista_de_ident TDOSPUNTOS tipo
+              |   lista_de_ident TDOSPUNTOS tipo
                   {
-                     //Con * en vez de ->??
                      codigo.anadirDeclaraciones($1->str, $3->tipo);
                   }
               ;
 
-lista_de_ident : TIDENTIFIER resto_lista_id
+lista_de_ident :  TIDENTIFIER resto_lista_id
                   {
-                     $$  = $2 ;
-                     $$->push_back(*$1);
+                     $$ = $2; //añadir resto_lista_id
+                     $$->push_back(*$1); //añadir al principio id
+                     // codigo.completar() hay que hacerlo o basta con lo de arriba?
                   }
-                  // codigo.completarInstrucciones()??
+                  
                ;
 
-resto_lista_id : TCOMA TIDENTIFIER resto_lista_id
+resto_lista_id :  TCOMA TIDENTIFIER resto_lista_id
                   {
                      $$  = $3 ;
                      $$->push_back(*$2);
+                     //codigo.completar ???
                   }
-               | /* empty */
+               |  /* empty */
                   {
                      $$ = new vector<string>;
                   }
                ;
 
-tipo : RINTEGER
-      { 
-         $$ = new std::string("entero");
-      }
-     | RFLOAT
-     { 
-         $$ = new std::string("real");
-      }
+tipo :   RINTEGER
+         { 
+         $$ = new std::string("Integer");
+         }
+      |  RFLOAT
+         { 
+         $$ = new std::string("Float");
+         }
      ;
 
 decl_de_subprogs : decl_de_subprograma decl_de_subprogs
@@ -341,11 +345,11 @@ expresion : expresion TEQUAL expresion
                $$->n= *$1;
                $$->tipo= "Integer";
             }
-          | TDOUBLE
+          | TFLOAT
             {
                $$= new estructuraExpresion;
                $$->n= *$1;
-               $$->tipo= "Double";
+               $$->tipo= "Float";
             }
           | TPARENI expresion TPAREND
             {
