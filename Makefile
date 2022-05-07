@@ -16,8 +16,8 @@ parser: $(FUENTES) Codigo.hpp Exp.hpp
 	g++ $(CFLAGS) -o $@ $(FUENTES) 
 
 prueba:  
-	./parser <pruebaBuena1.dat	
-	./parser <pruebaBuena2.dat
-	./parser <pruebaMala1.dat
-	./parser <pruebaMala2.dat
+	./parser <../pruebaBuena1.dat	
+	./parser <../pruebaBuena2.dat
+	./parser <../pruebaMala1.dat
+	./parser <../pruebaMala2.dat
 
