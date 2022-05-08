@@ -181,7 +181,7 @@ resto_lis_de_param : TSEMIC lista_de_ident TDOSPUNTOS clase_par tipo
 lista_de_sentencias : sentencia lista_de_sentencias 
                      {
                         $$->exits = *unir($1->exits, $2->exits);
-                        $$->continues= *unir($1->continues, $2->continues)
+                        $$->continues= *unir($1->continues, $2->continues);
                      } 
                     | /* empty */ 
                      {  
@@ -208,14 +208,18 @@ sentencia : variable TASSIG expresion TSEMIC
                $$->continues = $5->continues;
                delete $2 ;
             }
-          | RWHILE M expresion TDOSPUNTOS M bloque {codigo.anadirInstruccion("goto" + "2);}
-             RELSE TDOSPUNTOS M bloque
+          | RWHILE M expresion TDOSPUNTOS M bloque M {codigo.anadirInstruccion("goto" + $2);} RELSE TDOSPUNTOS bloque
             {
                $$ = new sentenciastruct;
 	      	   codigo.completarInstrucciones($3->trues,$5);
-    	  	      codigo.completarInstrucciones($3->falses,$10);
-               codigo.completarInstrucciones($6->exits, $9);
-               codigo.completarInstrucciones($6->continues, $2);
+    	  	      codigo.completarInstrucciones($3->falses,$7+1);
+
+               
+               vector<int> tmp1; tmp1.push_back($7);
+               codigo.completarInstrucciones(tmp1, $2);
+
+               codigo.completarInstrucciones($6->exits, $7);
+               codigo.completarInstrucciones($6->continues, $2); //??
                codigo.completarInstrucciones($10->exits, codigo.obtenRef());
                codigo.completarInstrucciones($10->continues, $2);
                $$->exits = * new vector<int>;
@@ -226,7 +230,6 @@ sentencia : variable TASSIG expresion TSEMIC
                $$ = new sentenciastruct;
                codigo.anadirInstruccion("goto " + $3);
                codigo.completarInstrucciones($4->exits, codigo.obtenRef());
-               //codigo.completarInstrucciones($4->continues, $2);
                $$->exits = * new vector<int>;
                $$->continues = $4->continues;
             }
@@ -234,8 +237,7 @@ sentencia : variable TASSIG expresion TSEMIC
             {
                $$ = new sentenciastruct;
                codigo.completarInstrucciones($3->falses, codigo.obtenRef());
-               $$->exits =  * new vector<int>;
-               $$->exits= push_back($3->trues);
+               $$->exits =  * new vector<int>($3->trues);
                $$->continues = * new vector<int>;
                delete $2;
             }
@@ -243,8 +245,7 @@ sentencia : variable TASSIG expresion TSEMIC
             {
                codigo.anadirInstruccion("goto");
                $$->exits = * new vector<int>;
-               $$->continues =  * new vector<int>;
-               $$->continues= push_back($3);
+               $$->continues =  * new vector<int>($3);
             }
           | RREAD TPARENI variable TPAREND TSEMIC
             {
@@ -282,78 +283,60 @@ variable : TIDENTIFIER
 
 expresion : expresion TEQUAL expresion
             {
-               $$= new expresionstruct;
-               $$->trues = * new vector<int>;
-               $$->falses = * new vector<int>;
                $$->str= "";
-               $$->trues= push_back(codigo.obtenRef());
-               $$->falses= push_back(codigo.obtenRef()+1);
-               //$$->tipo = "comparación";
+               $$= new expresionstruct;
+               $$->trues = * new vector<int>(codigo.obtenRef());
+               $$->falses = * new vector<int>(codigo.obtenRef()+1);
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
             }
           | expresion TMAYOR expresion
             {
-               $$= new expresionstruct;
-               $$->trues = * new vector<int>;
-               $$->falses = * new vector<int>;
                $$->str= "";
-               $$->trues= push_back(codigo.obtenRef());
-               $$->falses= push_back(codigo.obtenRef()+1);
-               //$$->tipo = "comparación";
+               $$= new expresionstruct;
+               $$->trues = * new vector<int>(codigo.obtenRef());
+               $$->falses = * new vector<int>(codigo.obtenRef()+1);
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
             }
           | expresion TMENOR expresion
             {
-               $$= new expresionstruct;
-               $$->trues = * new vector<int>;
-               $$->falses = * new vector<int>;
                $$->str= "";
-               $$->trues= push_back(codigo.obtenRef());
-               $$->falses= push_back(codigo.obtenRef()+1);
-               //$$->tipo = "comparación";
+               $$= new expresionstruct;
+               $$->trues = * new vector<int>(codigo.obtenRef());
+               $$->falses = * new vector<int>(codigo.obtenRef()+1);
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
             }
           | expresion TMAYOREQ expresion
             {
-               $$= new expresionstruct;
-               $$->trues = * new vector<int>;
-               $$->falses = * new vector<int>;
                $$->str= "";
-               $$->trues= push_back(codigo.obtenRef());
-               $$->falses= push_back(codigo.obtenRef()+1);
-               //$$->tipo = "comparación";
-               *$$ = makecomparison($1->str,*$2,$3->str); 
+               $$= new expresionstruct;
+               $$->trues = * new vector<int>(codigo.obtenRef());
+               $$->falses = * new vector<int>(codigo.obtenRef()+1);
+               *$$ = makecomparison($1->str,*$2,$3->str);  
 
                delete $1; delete $3; 
             }
           | expresion TMENOREQ expresion
             {
-               $$= new expresionstruct;
-               $$->trues = * new vector<int>;
-               $$->falses = * new vector<int>;
                $$->str= "";
-               $$->trues= push_back(codigo.obtenRef());
-               $$->falses= push_back(codigo.obtenRef()+1);
-               //$$->tipo = "comparación";
+               $$= new expresionstruct;
+               $$->trues = * new vector<int>(codigo.obtenRef());
+               $$->falses = * new vector<int>(codigo.obtenRef()+1);
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
             }
           | expresion TNOTEQUAL expresion
             {
-               $$= new expresionstruct;
-               $$->trues = * new vector<int>;
-               $$->falses = * new vector<int>;
                $$->str= "";
-               $$->trues= push_back(codigo.obtenRef());
-               $$->falses= push_back(codigo.obtenRef()+1);
-               //$$->tipo = "comparación";
+               $$= new expresionstruct;
+               $$->trues = * new vector<int>(codigo.obtenRef());
+               $$->falses = * new vector<int>(codigo.obtenRef()+1);
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
@@ -386,7 +369,6 @@ expresion : expresion TEQUAL expresion
                $$->trues = * new vector<int>;
                $$->falses = * new vector<int>;
                $$->str= codigo.nuevoId();
-               //$$->tipo = "operación aritmética";
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
@@ -397,7 +379,6 @@ expresion : expresion TEQUAL expresion
                $$->trues = * new vector<int>;
                $$->falses = * new vector<int>;
                $$->str= codigo.nuevoId();
-               //$$->tipo = "operación aritmética";
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
