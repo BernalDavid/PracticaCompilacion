@@ -12,26 +12,31 @@
      printf("line %d: %s at '%s'\n", yylineno, msg, yytext) ;
    }
 
-%}
+
 
 /* Funciones que se usan*/
- estructuraExpresion comparar(std::string &s1, std::string &s2, std::string &s3) ;
- estructuraExpresion operar(std::string &s1, std::string &s2, std::string &s3) ;
- vector<int> *unir(vector<int> lis1, vector<int> lis2);
+expresionstruct makecomparison(std::string &s1, std::string &s2, std::string &s3) ;
+expresionstruct makearithmetic(std::string &s1, std::string &s2, std::string &s3) ;
+vector<int> *unir(vector<int> lis1, vector<int> lis2);
+
+%}
+
 /* 
    qué atributos tienen los tokens 
 */
 %union {
     string *str ; 
-    estructuraExpresion *expr;
-    estructuraSentencia *sent;
+    expresionstruct *expr;
     
+    int number;
+    vector<string> *lid;
+    vector<int> *numlist;
 }
 
 /* 
    declaración de tokens. Esto debe coincidir con tokens.l 
 */
-%token <str> RDEF RMAIN RBEGIN RENDPROGRAM RIF RELSE RWHILE RFOREVER RBREAK RCONTINUE RREAD RPRINT RLET RIN RINTEGER RFLOAT
+%token <str> RDEF RMAIN RIF RELSE RWHILE RFOREVER RBREAK RCONTINUE RREAD RPRINT RLET RIN RINTEGER RFLOAT
 %token <str> TSEMIC TASSIG TDOSPUNTOS TCOMA
 %token <str> TIDENTIFIER TINTEGER TFLOAT
 %token <str> TLLAVEI TLLAVED TPARENI TPAREND TAND
@@ -41,22 +46,24 @@
 
 %type <str> programa
 %type <str> bloque_ppl
-%type <str> bloque
-//%type <str> decl_bl
+%type <numlist> bloque
+%type <str> decl_bl
 %type <str> declaraciones
-%type <str> lista_de_ident
-//%type <str> resto_lista_id
+%type <lid> lista_de_ident
+%type <lid> resto_lista_id
 %type <str> tipo
-//%type <str> decl_de_subprogs
+%type <str> decl_de_subprogs
 %type <str> decl_de_subprograma
-//%type <str> argumentos
+%type <str> argumentos
 %type <str> lista_de_param
-//%type <str> clase_par
-//%type <str> resto_lis_de_param
-//%type <sent> lista_de_sentencias
-%type <str> sentencia
-%type <str> variable
+%type <str> clase_par
+%type <str> resto_lis_de_param
+%type <numlist> lista_de_sentencias
+%type <numlist> sentencia
+%type <str> variable //o tipo <expr>???
 %type <expr> expresion
+%type <number> M
+%type <numlist> N
 
 //Prioridad y asociatividad de los operadores
 %nonassoc TASSIG TNOTEQUAL TMENOR TMENOREQ TMAYOR TMAYOREQ
@@ -68,7 +75,7 @@
 
 programa : RDEF RMAIN TPARENI TPAREND TDOSPUNTOS  
             {
-            codigo.anadirInstruccion("def main ():" + $6);
+            codigo.anadirInstruccion("def main ():" + $5);
             }
             bloque_ppl {
             codigo.anadirInstruccion("halt");
@@ -184,7 +191,7 @@ lista_de_sentencias : sentencia lista_de_sentencias
 
 sentencia : variable TASSIG expresion TSEMIC
             {
-               $$= new estructuraSentencia;
+               $$= new sentenciastruct;
                codigo.anadirInstruccion(*$1 + " := " + $3->str + ";") ; 
                $$->exits: * new vector<int>;
                // o exits.clear() * new vector<int>??
@@ -193,7 +200,7 @@ sentencia : variable TASSIG expresion TSEMIC
             }
           | RIF expresion TDOSPUNTOS M bloque M
             {
-               $$ = new estructuraSentencia;
+               $$ = new sentenciastruct;
 	      	   codigo.completarInstrucciones($2->trues,$4);
     	  	      codigo.completarInstrucciones($2->falses,$6);
 	      	   $$->exits = $5->exits;
@@ -201,30 +208,33 @@ sentencia : variable TASSIG expresion TSEMIC
             }
           | RWHILE M expresion TDOSPUNTOS M bloque N RELSE TDOSPUNTOS M bloque
             {
-               $$ = new estructuraSentencia;
+               $$ = new sentenciastruct;
 	      	   codigo.completarInstrucciones($3->trues,$5);
-    	  	      codigo.completarInstrucciones($3->falses,$10);
+    	  	      codigo.completarInstrucciones($3->falses,$10+1);
 
-               //esto no se lo que es, supuestamente para el N.next??
+               //REVISAR
+               codigo.anadirInstruccion("goto");
                vector<int> tmp1; 
-               tmp1.push_back($7);
+               tmp1.push_back($10);
                codigo.completarInstrucciones(tmp1, $2);
+
                codigo.completarInstrucciones($6->exits, $7+1);
-               $$->exits.clear();
+               $$ = new vector<int>;
+               //$$->exits.clear();
                /* No se si es necesario
                   $$->exits = $11->exits; */
                delete $4;
             }
           | RFOREVER TDOSPUNTOS M bloque M 
             {
-               $$ = new estructuraSentencia;
+               $$ = new sentenciastruct;
                codigo.anadirInstruccion("goto " + $3);
                codigo.completarInstrucciones($4, codigo.obtenRef());
                $$->exits= * new vector<int>;
             }
           | RBREAK RIF expresion TSEMIC
             {
-               $$ = new estructuraSentencia;
+               $$ = new sentenciastruct;
                codigo.completarInstrucciones($3->falses, codigo.obtenRef());
                $$->exits = $3->trues;
                delete $2;
@@ -235,18 +245,29 @@ sentencia : variable TASSIG expresion TSEMIC
             }*/
           | RREAD TPARENI variable TPAREND TSEMIC
             {
-               $$ = new estructuraSentencia;
+               $$ = new sentenciastruct;
 					$$->exits = * new vector<int>;
 					codigo.anadirInstruccion("read "+ *$3 + ";");
             }
           | RPRINT TPARENI expresion TPAREND TSEMIC
             {
-               {$$ = new sentenciastruct;
+               $$ = new sentenciastruct;
 					$$->exits = * new vector<int>;
 					codigo.anadirInstruccion("write "+ $3->str + ";");
 					codigo.anadirInstruccion("writeln;");
             }
           ;
+
+M : /* empty */
+   { $$ = codigo.obtenRef(); }
+   ;
+
+N : /* empty */ 
+   { 
+      $$ = new vector<int>;
+      codigo.anadirInstruccion("goto");
+   }
+   ;
 
 variable : TIDENTIFIER
             {
@@ -258,7 +279,7 @@ expresion : expresion TEQUAL expresion
             {
                $$= new estructuraExpresion;
                $$->tipo = "comparación";
-               *$$ = comparar($1->str,*$2,$3->str); 
+               *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
             }
@@ -266,7 +287,7 @@ expresion : expresion TEQUAL expresion
             {
                $$= new estructuraExpresion;
                $$->tipo = "comparación";
-               *$$ = comparar($1->str,*$2,$3->str); 
+               *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
             }
@@ -274,7 +295,7 @@ expresion : expresion TEQUAL expresion
             {
                $$= new estructuraExpresion;
                $$->tipo = "comparación";
-               *$$ = comparar($1->str,*$2,$3->str); 
+               *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
             }
@@ -282,7 +303,7 @@ expresion : expresion TEQUAL expresion
             {
                $$= new estructuraExpresion;
                $$->tipo = "comparación";
-               *$$ = comparar($1->str,*$2,$3->str); 
+               *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
             }
@@ -290,7 +311,7 @@ expresion : expresion TEQUAL expresion
             {
                $$= new estructuraExpresion;
                $$->tipo = "comparación";
-               *$$ = comparar($1->str,*$2,$3->str); 
+               *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
             }
@@ -298,7 +319,7 @@ expresion : expresion TEQUAL expresion
             {
                $$= new estructuraExpresion;
                $$->tipo = "comparación";
-               *$$ = comparar($1->str,*$2,$3->str); 
+               *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
             }
@@ -306,7 +327,7 @@ expresion : expresion TEQUAL expresion
             {
                $$= new estructuraExpresion;
                $$->tipo = "operación aritmética";
-               *$$ = operar($1->str,*$2,$3->str); 
+               *$$ = makearithmetic($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
             }
@@ -314,7 +335,7 @@ expresion : expresion TEQUAL expresion
             {
                $$= new estructuraExpresion;
                $$->tipo = "operación aritmética";
-               *$$ = operar($1->str,*$2,$3->str); 
+               *$$ = makearithmetic($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
             }
@@ -322,7 +343,7 @@ expresion : expresion TEQUAL expresion
             {
                $$= new estructuraExpresion;
                $$->tipo = "operación aritmética";
-               *$$ = operar($1->str,*$2,$3->str); 
+               *$$ = makearithmetic($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
             }
@@ -330,7 +351,7 @@ expresion : expresion TEQUAL expresion
             {
                $$= new estructuraExpresion;
                $$->tipo = "operación aritmética";
-               *$$ = operar($1->str,*$2,$3->str); 
+               *$$ = makearithmetic($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
             }
@@ -358,8 +379,8 @@ expresion : expresion TEQUAL expresion
           ;
 %%
 
-estructuraExpresion comparar(std::string &s1, std::string &s2, std::string &s3) {
-  estructuraExpresion tmp ; 
+expresionstruct makecomparison(std::string &s1, std::string &s2, std::string &s3) {
+  expresionstruct tmp ; 
 
   tmp.trues.push_back(codigo.obtenRef()) ;
   tmp.falses.push_back(codigo.obtenRef()+1) ;
@@ -369,8 +390,8 @@ estructuraExpresion comparar(std::string &s1, std::string &s2, std::string &s3) 
   return tmp ;
 }
 
-estructuraExpresion operar(std::string &s1, std::string &s2, std::string &s3) {
-  estructuraExpresion tmp ; 
+expresionstruct makearithmetic(std::string &s1, std::string &s2, std::string &s3) {
+  expresionstruct tmp ; 
 
   tmp.str = codigo.nuevoId() ;
 

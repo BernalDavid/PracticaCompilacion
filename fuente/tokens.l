@@ -36,11 +36,11 @@ float                   TOKEN(RFLOAT);
 ":"                     TOKEN(TDOSPUNTOS);
 ","                     TOKEN(TCOMA);
 
-'''[^#]*[\n]*[^#]*'''   ;
+'''([^#]*[\n]*('?'?[^#]+)*)*'''     ;
 
-#[^#]*[\n]+               ;
+#[^#]*[\n]+                         ;
 
-[ \t\n]                 ;
+[ \t\n]                             ;
 
 [a-zA-Z][a-zA-Z0-9]*([_]?[a-zA-Z0-9])*  TOKEN(TIDENTIFIER) ; 
 [0-9]+[.][0-9]+([eE][+-]?[0-9]+)?       TOKEN(TFLOAT);
