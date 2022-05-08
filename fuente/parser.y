@@ -150,43 +150,31 @@ decl_de_subprogs : decl_de_subprograma decl_de_subprogs
                  | /* empty */
                  ;
 
-decl_de_subprograma : RDEF TIDENTIFIER argumentos TDOSPUNTOS bloque_ppl
+decl_de_subprograma : RDEF TIDENTIFIER { codigo.anadirInstruccion(*$1 + " " + *$2); } // Duda si hay que poner "proc" o "def"
+                     argumentos TDOSPUNTOS bloque_ppl { codigo.anadirInstruccion("endproc"); } // Duda si hay que poner en tokens.l o dejar asi
                     ;
 
 argumentos : TPARENI lista_de_param TPAREND
            | /* empty */
            ;
 
-lista_de_param : lista_de_ident TDOSPUNTOS clase_par tipo resto_lis_de_param
-                  {
-                     codigo.anadirParametros(*$1, *$3, *$4);
-                     //codigo.anadirParametros($1->str, $3->tipo, $4->tipo);
-                  }
+lista_de_param : lista_de_ident TDOSPUNTOS clase_par tipo
+                 { codigo.anadirParametros($1->lnom, $3->tipo, $4->clase); delete $1; delete $3; delete $4; }
+                 resto_lis_de_param
                ;
 
 clase_par : /* empty */
-          | TAND
-            { 
-               $$ = new std::string("and");
-            }
+          | TAND { $$ = new std::string("and"); }
           ;
 
-resto_lis_de_param : TSEMIC lista_de_ident TDOSPUNTOS clase_par tipo resto_lis_de_param
-                     {
-                        codigo.anadirParametros(*$2, *$4, *$5);
-                     }
-                    | /* empty */
-                    ;
+resto_lis_de_param : TSEMIC lista_de_ident TDOSPUNTOS clase_par tipo 
+                     { codigo.anadirParametros($2->lnom, $4->tipo, $5->clase); delete $2; delete $4; delete $5; }
+                     resto_lis_de_param
+                     | /* empty */
+                     ;
 
-lista_de_sentencias : sentencia lista_de_sentencias
-                     {
-                        $$->exits = *unir($1->exits, $2->exits);
-                        //Falta continue
-                     }
-                    | /* empty */
-                     {
-                        $$->exits = * new vector<int>;
-                     }
+lista_de_sentencias : sentencia lista_de_sentencias {$$->exits = *unir($1->exits, $2->exits);} 
+                    | /* empty */ { $$->exits = * new vector<int>;}
                     ;
 
 sentencia : variable TASSIG expresion TSEMIC
