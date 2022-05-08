@@ -12,13 +12,15 @@
      printf("line %d: %s at '%s'\n", yylineno, msg, yytext) ;
    }
 
+   #include "Codigo.hpp"
+   #include "Exp.hpp"
 
+   /* Funciones que se usan*/
+   expresionstruct makecomparison(std::string &s1, std::string &s2, std::string &s3) ;
+   expresionstruct makearithmetic(std::string &s1, std::string &s2, std::string &s3) ;
+   vector<int> *unir(vector<int> lis1, vector<int> lis2);
 
-/* Funciones que se usan*/
-expresionstruct makecomparison(std::string &s1, std::string &s2, std::string &s3) ;
-expresionstruct makearithmetic(std::string &s1, std::string &s2, std::string &s3) ;
-vector<int> *unir(vector<int> lis1, vector<int> lis2);
-
+   Codigo codigo;
 %}
 
 /* 
@@ -55,7 +57,7 @@ vector<int> *unir(vector<int> lis1, vector<int> lis2);
 %type <str> decl_de_subprogs
 %type <str> decl_de_subprograma
 %type <str> argumentos
-%type <str> lista_de_param
+%type <lid> lista_de_param
 %type <str> clase_par
 %type <str> resto_lis_de_param
 %type <numlist> lista_de_sentencias
@@ -79,7 +81,7 @@ programa : RDEF RMAIN TPARENI TPAREND TDOSPUNTOS
             }
             bloque_ppl {
             codigo.anadirInstruccion("halt");
-            codigo.esccribir();
+            codigo.escribir();
             }
          ;
 
@@ -94,9 +96,9 @@ bloque : TLLAVEI
          TLLAVED
          {
          //Falta continue
-         $$= new estructuraExpresion;
+         $$= new expresionstruct;
          $$->exits= $2->exits;
-         $$= new estructuraExpresion:
+         $$= new expresionstruct:
          $$->continues = $2->continues;
          }
        ;
@@ -164,7 +166,7 @@ lista_de_param : lista_de_ident TDOSPUNTOS clase_par tipo
                ;
 
 clase_par : /* empty */
-          | TAND { $$ = new std::string("and"); }
+          | TAND { $$ = new std::string("&"); }
           ;
 
 resto_lis_de_param : TSEMIC lista_de_ident TDOSPUNTOS clase_par tipo 
@@ -265,7 +267,7 @@ variable : TIDENTIFIER
 
 expresion : expresion TEQUAL expresion
             {
-               $$= new estructuraExpresion;
+               $$= new expresionstruct;
                $$->tipo = "comparación";
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
@@ -273,7 +275,7 @@ expresion : expresion TEQUAL expresion
             }
           | expresion TMAYOR expresion
             {
-               $$= new estructuraExpresion;
+               $$= new expresionstruct;
                $$->tipo = "comparación";
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
@@ -281,7 +283,7 @@ expresion : expresion TEQUAL expresion
             }
           | expresion TMENOR expresion
             {
-               $$= new estructuraExpresion;
+               $$= new expresionstruct;
                $$->tipo = "comparación";
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
@@ -289,7 +291,7 @@ expresion : expresion TEQUAL expresion
             }
           | expresion TMAYOREQ expresion
             {
-               $$= new estructuraExpresion;
+               $$= new expresionstruct;
                $$->tipo = "comparación";
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
@@ -297,7 +299,7 @@ expresion : expresion TEQUAL expresion
             }
           | expresion TMENOREQ expresion
             {
-               $$= new estructuraExpresion;
+               $$= new expresionstruct;
                $$->tipo = "comparación";
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
@@ -305,7 +307,7 @@ expresion : expresion TEQUAL expresion
             }
           | expresion TNOTEQUAL expresion
             {
-               $$= new estructuraExpresion;
+               $$= new expresionstruct;
                $$->tipo = "comparación";
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
@@ -313,7 +315,7 @@ expresion : expresion TEQUAL expresion
             }
           | expresion TPLUS expresion
             {
-               $$= new estructuraExpresion;
+               $$= new expresionstruct;
                $$->tipo = "operación aritmética";
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
@@ -321,7 +323,7 @@ expresion : expresion TEQUAL expresion
             }
           | expresion TMINUS expresion
             {
-               $$= new estructuraExpresion;
+               $$= new expresionstruct;
                $$->tipo = "operación aritmética";
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
@@ -329,7 +331,7 @@ expresion : expresion TEQUAL expresion
             }
           | expresion TMUL expresion
             {
-               $$= new estructuraExpresion;
+               $$= new expresionstruct;
                $$->tipo = "operación aritmética";
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
@@ -337,7 +339,7 @@ expresion : expresion TEQUAL expresion
             }
           | expresion TDIV expresion
             {
-               $$= new estructuraExpresion;
+               $$= new expresionstruct;
                $$->tipo = "operación aritmética";
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
@@ -345,18 +347,18 @@ expresion : expresion TEQUAL expresion
             }
           | TIDENTIFIER
             {
-               $$= new estructuraExpresion;
+               $$= new expresionstruct;
                $$->n= *$1;
             }
           | TINTEGER
             {
-               $$= new estructuraExpresion;
+               $$= new expresionstruct;
                $$->n= *$1;
                $$->tipo= "Integer";
             }
           | TFLOAT
             {
-               $$= new estructuraExpresion;
+               $$= new expresionstruct;
                $$->n= *$1;
                $$->tipo= "Float";
             }
