@@ -29,7 +29,7 @@
 %union {
     string *str ; 
     expresionstruct *expr;
-    
+    sentenciastruct *sen;
     int number;
     vector<string> *lid;
     vector<int> *numlist;
@@ -48,7 +48,7 @@
 
 %type <str> programa
 %type <str> bloque_ppl
-%type <numlist> bloque
+%type <sen> bloque
 %type <str> decl_bl
 %type <str> declaraciones
 %type <lid> lista_de_ident
@@ -60,8 +60,8 @@
 %type <lid> lista_de_param
 %type <str> clase_par
 %type <str> resto_lis_de_param
-%type <numlist> lista_de_sentencias
-%type <numlist> sentencia
+%type <sen> lista_de_sentencias
+%type <sen> sentencia
 %type <str> variable //o tipo <expr>???
 %type <expr> expresion
 %type <number> M
@@ -77,7 +77,7 @@
 
 programa : RDEF RMAIN TPARENI TPAREND TDOSPUNTOS  
             {
-            codigo.anadirInstruccion("def main ():" + $5);
+            codigo.anadirInstruccion("def main ():");
             }
             bloque_ppl {
             codigo.anadirInstruccion("halt");
@@ -96,9 +96,9 @@ bloque : TLLAVEI
          TLLAVED
          {
          //Falta continue
-         $$= new expresionstruct;
+         $$= new sentenciastruct;
          $$->exits= $2->exits;
-         $$= new expresionstruct:
+         $$= new sentenciastruct;
          $$->continues = $2->continues;
          }
        ;
@@ -109,11 +109,11 @@ decl_bl : RLET declaraciones RIN
 
 declaraciones :   declaraciones TSEMIC lista_de_ident TDOSPUNTOS tipo
                   {
-                     codigo.anadirDeclaraciones($3->str, $5->tipo);
+                     codigo.anadirDeclaraciones(*$3, *$5);
                   }
               |   lista_de_ident TDOSPUNTOS tipo
                   {
-                     codigo.anadirDeclaraciones($1->str, $3->tipo);
+                     codigo.anadirDeclaraciones(*$1, *$3);
                   }
               ;
 
@@ -161,7 +161,7 @@ argumentos : TPARENI lista_de_param TPAREND
            ;
 
 lista_de_param : lista_de_ident TDOSPUNTOS clase_par tipo
-                 { codigo.anadirParametros($1->lnom, $3->tipo, $4->clase); delete $1; delete $3; delete $4; }
+                 { codigo.anadirParametros(*$1, *$3, *$4); delete $1; delete $3; delete $4; }
                  resto_lis_de_param
                ;
 
@@ -170,7 +170,7 @@ clase_par : /* empty */
           ;
 
 resto_lis_de_param : TSEMIC lista_de_ident TDOSPUNTOS clase_par tipo 
-                     { codigo.anadirParametros($2->lnom, $4->tipo, $5->clase); delete $2; delete $4; delete $5; }
+                     { codigo.anadirParametros(*$2, *$4, *$5); delete $2; delete $4; delete $5; }
                      resto_lis_de_param
                      | /* empty */
                      ;
@@ -183,9 +183,8 @@ sentencia : variable TASSIG expresion TSEMIC
             {
                $$= new sentenciastruct;
                codigo.anadirInstruccion(*$1 + " := " + $3->str + ";") ; 
-               $$->exits: * new vector<int>;
+               $$->exits = * new vector<int>;
                // o exits.clear() * new vector<int>??
-               $$->tipo = "asignacion";
                delete $1 ; delete $3;
             }
           | RIF expresion TDOSPUNTOS M bloque M
@@ -209,17 +208,15 @@ sentencia : variable TASSIG expresion TSEMIC
                codigo.completarInstrucciones(tmp1, $2);
 
                codigo.completarInstrucciones($6->exits, $7+1);
-               $$ = new vector<int>;
-               //$$->exits.clear();
-               /* No se si es necesario
-                  $$->exits = $11->exits; */
+               
+               $$->exits = $11->exits;
                delete $4;
             }
           | RFOREVER TDOSPUNTOS M bloque M 
             {
                $$ = new sentenciastruct;
                codigo.anadirInstruccion("goto " + $3);
-               codigo.completarInstrucciones($4, codigo.obtenRef());
+               codigo.completarInstrucciones($4->exits, codigo.obtenRef());
                $$->exits= * new vector<int>;
             }
           | RBREAK RIF expresion TSEMIC
@@ -268,7 +265,7 @@ variable : TIDENTIFIER
 expresion : expresion TEQUAL expresion
             {
                $$= new expresionstruct;
-               $$->tipo = "comparación";
+               //$$->tipo = "comparación";
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
@@ -276,7 +273,7 @@ expresion : expresion TEQUAL expresion
           | expresion TMAYOR expresion
             {
                $$= new expresionstruct;
-               $$->tipo = "comparación";
+               //$$->tipo = "comparación";
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
@@ -284,7 +281,7 @@ expresion : expresion TEQUAL expresion
           | expresion TMENOR expresion
             {
                $$= new expresionstruct;
-               $$->tipo = "comparación";
+               //$$->tipo = "comparación";
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
@@ -292,7 +289,7 @@ expresion : expresion TEQUAL expresion
           | expresion TMAYOREQ expresion
             {
                $$= new expresionstruct;
-               $$->tipo = "comparación";
+               //$$->tipo = "comparación";
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
@@ -300,7 +297,7 @@ expresion : expresion TEQUAL expresion
           | expresion TMENOREQ expresion
             {
                $$= new expresionstruct;
-               $$->tipo = "comparación";
+               //$$->tipo = "comparación";
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
@@ -308,7 +305,7 @@ expresion : expresion TEQUAL expresion
           | expresion TNOTEQUAL expresion
             {
                $$= new expresionstruct;
-               $$->tipo = "comparación";
+               //$$->tipo = "comparación";
                *$$ = makecomparison($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
@@ -316,7 +313,7 @@ expresion : expresion TEQUAL expresion
           | expresion TPLUS expresion
             {
                $$= new expresionstruct;
-               $$->tipo = "operación aritmética";
+               //$$->tipo = "operación aritmética";
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
@@ -324,7 +321,7 @@ expresion : expresion TEQUAL expresion
           | expresion TMINUS expresion
             {
                $$= new expresionstruct;
-               $$->tipo = "operación aritmética";
+               //$$->tipo = "operación aritmética";
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
@@ -332,7 +329,7 @@ expresion : expresion TEQUAL expresion
           | expresion TMUL expresion
             {
                $$= new expresionstruct;
-               $$->tipo = "operación aritmética";
+               //$$->tipo = "operación aritmética";
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
@@ -340,7 +337,7 @@ expresion : expresion TEQUAL expresion
           | expresion TDIV expresion
             {
                $$= new expresionstruct;
-               $$->tipo = "operación aritmética";
+               //$$->tipo = "operación aritmética";
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
@@ -348,23 +345,24 @@ expresion : expresion TEQUAL expresion
           | TIDENTIFIER
             {
                $$= new expresionstruct;
-               $$->n= *$1;
+               $$->str = *$1;
             }
           | TINTEGER
             {
                $$= new expresionstruct;
-               $$->n= *$1;
-               $$->tipo= "Integer";
+               $$->str = *$1;
+               //$$->tipo= "Integer";
             }
           | TFLOAT
             {
                $$= new expresionstruct;
-               $$->n= *$1;
-               $$->tipo= "Float";
+               $$->str = *$1;
+               //$$->tipo= "Float";
             }
           | TPARENI expresion TPAREND
             {
-               $$= $2;
+               $$= new expresionstruct;
+               $$->str = $2->str;
             }
           ;
 %%

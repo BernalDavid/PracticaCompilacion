@@ -8,4 +8,10 @@ struct expresionstruct {
   vector<int> falses ;
 };
 
+struct sentenciastruct {
+  string str;
+  vector<int> exits;
+  vector<int> continues;
+};
+
 #endif /* EXP_HPP_ */
