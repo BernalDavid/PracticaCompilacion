@@ -208,20 +208,20 @@ sentencia : variable TASSIG expresion TSEMIC
                $$->continues = $5->continues;
                delete $2 ;
             }
-          | RWHILE M expresion TDOSPUNTOS M bloque M {codigo.anadirInstruccion("goto" + $2);} RELSE TDOSPUNTOS bloque
+          | RWHILE M expresion TDOSPUNTOS M bloque M {codigo.anadirInstruccion("goto" + $2);} RELSE M TDOSPUNTOS bloque M
             {
                $$ = new sentenciastruct;
 	      	   codigo.completarInstrucciones($3->trues,$5);
-    	  	      codigo.completarInstrucciones($3->falses,$7+1);
+    	  	      codigo.completarInstrucciones($3->falses,$10);
 
                
                vector<int> tmp1; tmp1.push_back($7);
                codigo.completarInstrucciones(tmp1, $2);
 
-               codigo.completarInstrucciones($6->exits, $7);
+               codigo.completarInstrucciones($6->exits, $10);
                codigo.completarInstrucciones($6->continues, $2); //??
-               codigo.completarInstrucciones($10->exits, codigo.obtenRef());
-               codigo.completarInstrucciones($10->continues, $2);
+               codigo.completarInstrucciones($11->exits, $12);
+               codigo.completarInstrucciones($11->continues, $2);
                $$->exits = * new vector<int>;
                $$->continues = * new vector<int>;
             }
