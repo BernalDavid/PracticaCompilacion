@@ -41,7 +41,7 @@
 %token <str> RDEF RMAIN RIF RELSE RWHILE RFOREVER RBREAK RCONTINUE RREAD RPRINT RLET RIN RINTEGER RFLOAT
 %token <str> TSEMIC TASSIG TDOSPUNTOS TCOMA
 %token <str> TIDENTIFIER TINTEGER TFLOAT
-%token <str> TLLAVEI TLLAVED TPARENI TPAREND TAND
+%token <str> TLLAVEI TLLAVED TPARENI TPAREND TREF
 %token <str> TEQUAL TMAYOR TMENOR TMAYOREQ TMENOREQ TNOTEQUAL
 %token <str> TPLUS TMINUS TMUL TDIV
 
@@ -95,10 +95,8 @@ bloque : TLLAVEI
          lista_de_sentencias
          TLLAVED
          {
-         //Falta continue
-         $$= new sentenciastruct;
-         $$->exits= $2->exits;
-         $$= new sentenciastruct;
+         $$ = new sentenciastruct;
+         $$->exits = $2->exits;
          $$->continues = $2->continues;
          }
        ;
@@ -119,6 +117,7 @@ declaraciones :   declaraciones TSEMIC lista_de_ident TDOSPUNTOS tipo
 
 lista_de_ident :  TIDENTIFIER resto_lista_id
                   {
+                     
                      $$ = $2; //añadir resto_lista_id
                      $$->push_back(*$1); //añadir al principio id
                      // codigo.completar() hay que hacerlo o basta con lo de arriba?
@@ -128,9 +127,9 @@ lista_de_ident :  TIDENTIFIER resto_lista_id
 
 resto_lista_id :  TCOMA TIDENTIFIER resto_lista_id
                   {
-                     $$  = $3 ;
+                     
+                     $$  = new vector<string>(*$3);
                      $$->push_back(*$2);
-                     //codigo.completar ???
                   }
                |  /* empty */
                   {
@@ -169,7 +168,7 @@ clase_par : /* empty */
             {
                $$ = new std::string("val_");
             }
-          | TAND { $$ = new std::string("ref_"); }
+          | TREF { $$ = new std::string("ref_"); }
           ;
 
 resto_lis_de_param : TSEMIC lista_de_ident TDOSPUNTOS clase_par tipo 
@@ -180,11 +179,13 @@ resto_lis_de_param : TSEMIC lista_de_ident TDOSPUNTOS clase_par tipo
 
 lista_de_sentencias : sentencia lista_de_sentencias 
                      {
+                        $$ = new sentenciastruct;
                         $$->exits = *unir($1->exits, $2->exits);
                         $$->continues= *unir($1->continues, $2->continues);
                      } 
                     | /* empty */ 
                      {  
+                       $$ = new sentenciastruct;
                        $$->exits = * new vector<int>;
                        $$->continues = * new vector<int>;
                      }
@@ -196,7 +197,6 @@ sentencia : variable TASSIG expresion TSEMIC
                codigo.anadirInstruccion(*$1 + " := " + $3->str + ";") ; 
                $$->exits = * new vector<int>;
                $$->continues = * new vector<int>;
-               // o exits.clear() ??
                delete $1 ; delete $3;
             }
           | RIF expresion TDOSPUNTOS M bloque M
@@ -208,18 +208,13 @@ sentencia : variable TASSIG expresion TSEMIC
                $$->continues = $5->continues;
                delete $2 ;
             }
-          | RWHILE M expresion TDOSPUNTOS M bloque M {codigo.anadirInstruccion("goto" + $2);} RELSE M TDOSPUNTOS bloque M
+          | RWHILE M expresion TDOSPUNTOS M bloque {codigo.anadirInstruccion("goto" + $2);} RELSE TDOSPUNTOS M bloque M
             {
                $$ = new sentenciastruct;
 	      	   codigo.completarInstrucciones($3->trues,$5);
     	  	      codigo.completarInstrucciones($3->falses,$10);
-
-               
-               vector<int> tmp1; tmp1.push_back($7);
-               codigo.completarInstrucciones(tmp1, $2);
-
                codigo.completarInstrucciones($6->exits, $10);
-               codigo.completarInstrucciones($6->continues, $2); //??
+               codigo.completarInstrucciones($6->continues, $2);
                codigo.completarInstrucciones($11->exits, $12);
                codigo.completarInstrucciones($11->continues, $2);
                $$->exits = * new vector<int>;
@@ -243,6 +238,7 @@ sentencia : variable TASSIG expresion TSEMIC
             }
           | RCONTINUE TSEMIC M
             {
+               $$ = new sentenciastruct;
                codigo.anadirInstruccion("goto");
                $$->exits = * new vector<int>;
                $$->continues =  * new vector<int>($3);

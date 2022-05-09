@@ -51,7 +51,7 @@ float                   TOKEN(RFLOAT);
 "}"                     TOKEN(TLLAVED);
 "("                     TOKEN(TPARENI);
 ")"                     TOKEN(TPAREND);
-"&"                     TOKEN(TAND);
+"&"                     TOKEN(TREF);
 
 "="                     TOKEN(TASSIG);
 "=""="                  TOKEN(TEQUAL);
