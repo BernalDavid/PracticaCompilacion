@@ -15,7 +15,7 @@ tokens.cpp: tokens.l parser.hpp
 parser: $(FUENTES) Codigo.hpp Exp.hpp
 	g++ $(CFLAGS) -o $@ $(FUENTES) 
 
-prueba: parser ../pruebaBuena1.dat ../pruebaBuena2.dat ../pruebaMala1.dat ../pruebaMala2.dat
+prueba:
 	./parser <../pruebaBuena1.dat	
 	./parser <../pruebaBuena2.dat
 	./parser <../pruebaMala1.dat

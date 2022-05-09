@@ -54,18 +54,17 @@
 %type <lid> lista_de_ident
 %type <lid> resto_lista_id
 %type <str> tipo
-%type <str> decl_de_subprogs
+//%type <str> decl_de_subprogs
 %type <str> decl_de_subprograma
-%type <str> argumentos
+//%type <str> argumentos
 %type <lid> lista_de_param
 %type <str> clase_par
-%type <str> resto_lis_de_param
+//%type <str> resto_lis_de_param
 %type <sen> lista_de_sentencias
 %type <sen> sentencia
 %type <str> variable //o tipo <expr>???
 %type <expr> expresion
 %type <number> M
-%type <numlist> N
 
 //Prioridad y asociatividad de los operadores
 %nonassoc TASSIG TNOTEQUAL TMENOR TMENOREQ TMAYOR TMAYOREQ
@@ -262,13 +261,6 @@ sentencia : variable TASSIG expresion TSEMIC
 
 M : /* empty */
    { $$ = codigo.obtenRef(); }
-   ;
-
-N : /* empty */ 
-   { 
-      $$ = new vector<int>;
-      codigo.anadirInstruccion("goto");
-   }
    ;
 
 variable : TIDENTIFIER
