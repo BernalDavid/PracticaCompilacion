@@ -64,7 +64,7 @@ void Codigo::anadirParametros(const vector<string> &idNombres, const string &pTi
   else if (pTipo == "in out") pTipoAux = "ref" ;
   vector<string>::const_iterator iter;
   for (iter=idNombres.begin(); iter!=idNombres.end(); iter++) {
-    anadirInstruccion(pTipoAux + "_" + tipoNombre + " " + *iter + ";");
+    anadirInstruccion(pTipoAux + "" + tipoNombre + "_" + pTipo + " " +*iter + ";");
   }
 }
 

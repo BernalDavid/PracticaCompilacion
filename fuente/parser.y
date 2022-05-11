@@ -76,7 +76,7 @@
 
 programa : RDEF RMAIN TPARENI TPAREND TDOSPUNTOS  
             {
-            codigo.anadirInstruccion("def main ():");
+            codigo.anadirInstruccion("proc main");
             }
             bloque_ppl {
             codigo.anadirInstruccion("halt");
@@ -116,10 +116,9 @@ declaraciones :   declaraciones TSEMIC lista_de_ident TDOSPUNTOS tipo
 
 lista_de_ident :  TIDENTIFIER resto_lista_id
                   {
-                     
+                     $$ = new vector<string>;
                      $$ = $2; //añadir resto_lista_id
-                     $$->push_back(*$1); //añadir al principio id
-                     // codigo.completar() hay que hacerlo o basta con lo de arriba?
+                     $$->insert($$->begin(), *$1); //añadir al principio id
                   }
                   
                ;
@@ -128,7 +127,8 @@ resto_lista_id :  TCOMA TIDENTIFIER resto_lista_id
                   {
                      
                      $$  = new vector<string>(*$3);
-                     $$->push_back(*$2);
+                     //$$->push_back(*$2);
+                     $$->insert($$->begin(), *$2);
                   }
                |  /* empty */
                   {
@@ -138,11 +138,11 @@ resto_lista_id :  TCOMA TIDENTIFIER resto_lista_id
 
 tipo :   RINTEGER
          { 
-         $$ = new std::string("Integer");
+         $$ = new std::string("int");
          }
       |  RFLOAT
          { 
-         $$ = new std::string("Float");
+         $$ = new std::string("real");
          }
      ;
 
@@ -159,19 +159,19 @@ argumentos : TPARENI lista_de_param TPAREND
            ;
 
 lista_de_param : lista_de_ident TDOSPUNTOS clase_par tipo
-                 { codigo.anadirParametros(*$1, *$3, *$4); delete $1; delete $3; delete $4; }
+                 { codigo.anadirParametros(*$1, *$4, *$3); delete $1; delete $3; delete $4; }
                  resto_lis_de_param
                ;
 
 clase_par : /* empty */
             {
-               $$ = new std::string("val_");
+               $$ = new std::string("val");
             }
-          | TREF { $$ = new std::string("ref_"); }
+          | TREF { $$ = new std::string("ref"); }
           ;
 
 resto_lis_de_param : TSEMIC lista_de_ident TDOSPUNTOS clase_par tipo 
-                     { codigo.anadirParametros(*$2, *$4, *$5); delete $2; delete $4; delete $5; }
+                     { codigo.anadirParametros(*$2, *$5, *$4); delete $2; delete $4; delete $5; }
                      resto_lis_de_param
                      | /* empty */
                      ;
@@ -181,6 +181,7 @@ lista_de_sentencias : sentencia lista_de_sentencias
                         $$ = new sentenciastruct;
                         $$->exits = *unir($1->exits, $2->exits);
                         $$->continues= *unir($1->continues, $2->continues);
+                        delete $1; delete $2;
                      } 
                     | /* empty */ 
                      {  
@@ -239,8 +240,8 @@ sentencia : variable TASSIG expresion TSEMIC
             {
                $$ = new sentenciastruct;
                codigo.anadirInstruccion("goto");
-               $$->exits = * new vector<int>;
-               $$->continues =  * new vector<int>($3);
+               $$->exits =  *new vector<int>;
+               $$->continues =  *new vector<int>($3);
             }
           | RREAD TPARENI variable TPAREND TSEMIC
             {
@@ -334,7 +335,7 @@ expresion : expresion TEQUAL expresion
                $$= new expresionstruct;
                $$->trues = * new vector<int>;
                $$->falses = * new vector<int>;
-               $$->str= codigo.nuevoId();
+               
                //$$->tipo = "operación aritmética";
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
@@ -345,7 +346,7 @@ expresion : expresion TEQUAL expresion
                $$= new expresionstruct;
                $$->trues = * new vector<int>;
                $$->falses = * new vector<int>;
-               $$->str= codigo.nuevoId();
+               
                //$$->tipo = "operación aritmética";
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
@@ -356,7 +357,7 @@ expresion : expresion TEQUAL expresion
                $$= new expresionstruct;
                $$->trues = * new vector<int>;
                $$->falses = * new vector<int>;
-               $$->str= codigo.nuevoId();
+               
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
@@ -366,7 +367,7 @@ expresion : expresion TEQUAL expresion
                $$= new expresionstruct;
                $$->trues = * new vector<int>;
                $$->falses = * new vector<int>;
-               $$->str= codigo.nuevoId();
+               
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
