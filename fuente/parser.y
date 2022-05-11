@@ -126,9 +126,7 @@ lista_de_ident :  TIDENTIFIER resto_lista_id
 
 resto_lista_id :  TCOMA TIDENTIFIER resto_lista_id
                   {
-                     
                      $$  = new vector<string>(*$3);
-                     //$$->push_back(*$2);
                      $$->insert($$->begin(), *$2);
                   }
                |  /* empty */
@@ -151,8 +149,10 @@ decl_de_subprogs : decl_de_subprograma decl_de_subprogs
                  | /* empty */
                  ;
 
-decl_de_subprograma : RDEF TIDENTIFIER { codigo.anadirInstruccion(*$1 + " " + *$2); } // Duda si hay que poner "proc" o "def"
-                     argumentos TDOSPUNTOS bloque_ppl { codigo.anadirInstruccion("endproc " + *$2); } // Duda si hay que poner en tokens.l o dejar asi
+decl_de_subprograma : RDEF TIDENTIFIER 
+                        { codigo.anadirInstruccion("proc " + *$2); } // Duda si hay que poner "proc" o "def"
+                      argumentos TDOSPUNTOS bloque_ppl 
+                        { codigo.anadirInstruccion("endproc " + *$2); } // Duda si hay que poner en tokens.l o dejar asi
                     ;
 
 argumentos : TPARENI lista_de_param TPAREND
@@ -160,7 +160,7 @@ argumentos : TPARENI lista_de_param TPAREND
            ;
 
 lista_de_param : lista_de_ident TDOSPUNTOS clase_par tipo
-                 { codigo.anadirParametros(*$1, *$4, *$3); delete $1; delete $3; delete $4; }
+                 { codigo.anadirParametros(*$1, *$4, *$3); delete $1; delete $4; delete $3; }
                  resto_lis_de_param
                ;
 
@@ -172,7 +172,7 @@ clase_par : /* empty */
           ;
 
 resto_lis_de_param : TSEMIC lista_de_ident TDOSPUNTOS clase_par tipo 
-                     { codigo.anadirParametros(*$2, *$5, *$4); delete $2; delete $4; delete $5; }
+                     { codigo.anadirParametros(*$2, *$5, *$4); delete $2; delete $5; delete $4; }
                      resto_lis_de_param
                      | /* empty */
                      ;
