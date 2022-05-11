@@ -65,6 +65,7 @@
 %type <str> variable //o tipo <expr>???
 %type <expr> expresion
 %type <number> M
+%type <numlist> N
 
 //Prioridad y asociatividad de los operadores
 %nonassoc TASSIG TNOTEQUAL TMENOR TMENOREQ TMAYOR TMAYOREQ
@@ -208,17 +209,18 @@ sentencia : variable TASSIG expresion TSEMIC
                $$->continues = $5->continues;
                delete $2 ;
             }
-          | RWHILE M expresion TDOSPUNTOS M bloque {codigo.anadirInstruccion("goto" + $2);} RELSE TDOSPUNTOS M bloque M
+          | RWHILE M expresion TDOSPUNTOS M bloque N RELSE TDOSPUNTOS M bloque M
             {
                $$ = new sentenciastruct;
+               $$->exits = * new vector<int>;
+               $$->continues = * new vector<int>;
+               codigo.completarInstrucciones(*$7,$2);
 	      	   codigo.completarInstrucciones($3->trues,$5);
     	  	      codigo.completarInstrucciones($3->falses,$10);
                codigo.completarInstrucciones($6->exits, $10);
                codigo.completarInstrucciones($6->continues, $2);
                codigo.completarInstrucciones($11->exits, $12);
                codigo.completarInstrucciones($11->continues, $2);
-               $$->exits = * new vector<int>;
-               $$->continues = * new vector<int>;
             }
           | RFOREVER TDOSPUNTOS M bloque M 
             {
@@ -240,8 +242,10 @@ sentencia : variable TASSIG expresion TSEMIC
             {
                $$ = new sentenciastruct;
                codigo.anadirInstruccion("goto");
-               $$->exits =  *new vector<int>;
-               $$->continues =  *new vector<int>($3);
+               $$->exits = * new vector<int>;
+               
+               vector<int> tmp1 ; tmp1.push_back(codigo.obtenRef()) ;
+               $$->continues = tmp1;
             }
           | RREAD TPARENI variable TPAREND TSEMIC
             {
@@ -263,7 +267,14 @@ sentencia : variable TASSIG expresion TSEMIC
 M : /* empty */
    { $$ = codigo.obtenRef(); }
    ;
-
+N : /* empty */ 
+   { 
+      $$ = new vector<int>;    
+      vector<int> tmp1 ; tmp1.push_back(codigo.obtenRef()) ;
+      *$$ = tmp1;
+      codigo.anadirInstruccion("goto");
+   }
+   ;
 variable : TIDENTIFIER
             {
                $$= $1;
