@@ -47,19 +47,19 @@
 
 
 %type <str> programa
-%type <str> bloque_ppl
+%type <sen> bloque_ppl //str
 %type <sen> bloque
 %type <str> decl_bl
 %type <str> declaraciones
 %type <lid> lista_de_ident
 %type <lid> resto_lista_id
 %type <str> tipo
-//%type <str> decl_de_subprogs
+%type <str> decl_de_subprogs
 %type <str> decl_de_subprograma
-//%type <str> argumentos
+%type <str> argumentos
 %type <lid> lista_de_param
 %type <str> clase_par
-//%type <str> resto_lis_de_param
+%type <str> resto_lis_de_param
 %type <sen> lista_de_sentencias
 %type <sen> sentencia
 %type <str> variable //o tipo <expr>???
@@ -152,7 +152,7 @@ decl_de_subprogs : decl_de_subprograma decl_de_subprogs
                  ;
 
 decl_de_subprograma : RDEF TIDENTIFIER { codigo.anadirInstruccion(*$1 + " " + *$2); } // Duda si hay que poner "proc" o "def"
-                     argumentos TDOSPUNTOS bloque_ppl { codigo.anadirInstruccion("endproc"); } // Duda si hay que poner en tokens.l o dejar asi
+                     argumentos TDOSPUNTOS bloque_ppl { codigo.anadirInstruccion("endproc " + *$2); } // Duda si hay que poner en tokens.l o dejar asi
                     ;
 
 argumentos : TPARENI lista_de_param TPAREND
@@ -207,16 +207,17 @@ sentencia : variable TASSIG expresion TSEMIC
     	  	      codigo.completarInstrucciones($2->falses,$6);
 	      	   $$->exits = $5->exits;
                $$->continues = $5->continues;
-               delete $2 ;
+               //delete $2 ;
             }
           | RWHILE M expresion TDOSPUNTOS M bloque N RELSE TDOSPUNTOS M bloque M
             {
                $$ = new sentenciastruct;
                $$->exits = * new vector<int>;
                $$->continues = * new vector<int>;
-               codigo.completarInstrucciones(*$7,$2);
+               
 	      	   codigo.completarInstrucciones($3->trues,$5);
     	  	      codigo.completarInstrucciones($3->falses,$10);
+               codigo.completarInstrucciones(*$7,$2);
                codigo.completarInstrucciones($6->exits, $10);
                codigo.completarInstrucciones($6->continues, $2);
                codigo.completarInstrucciones($11->exits, $12);
@@ -283,8 +284,8 @@ variable : TIDENTIFIER
 
 expresion : expresion TEQUAL expresion
             {
-               $$->str= "";
                $$= new expresionstruct;
+               $$->str= "";
                $$->trues = * new vector<int>(codigo.obtenRef());
                $$->falses = * new vector<int>(codigo.obtenRef()+1);
                *$$ = makecomparison($1->str,*$2,$3->str); 
@@ -293,8 +294,8 @@ expresion : expresion TEQUAL expresion
             }
           | expresion TMAYOR expresion
             {
-               $$->str= "";
                $$= new expresionstruct;
+               $$->str= "";
                $$->trues = * new vector<int>(codigo.obtenRef());
                $$->falses = * new vector<int>(codigo.obtenRef()+1);
                *$$ = makecomparison($1->str,*$2,$3->str); 
@@ -303,18 +304,17 @@ expresion : expresion TEQUAL expresion
             }
           | expresion TMENOR expresion
             {
-               $$->str= "";
                $$= new expresionstruct;
+               $$->str= "";
                $$->trues = * new vector<int>(codigo.obtenRef());
                $$->falses = * new vector<int>(codigo.obtenRef()+1);
                *$$ = makecomparison($1->str,*$2,$3->str); 
-
                delete $1; delete $3; 
             }
           | expresion TMAYOREQ expresion
             {
-               $$->str= "";
                $$= new expresionstruct;
+               $$->str= "";
                $$->trues = * new vector<int>(codigo.obtenRef());
                $$->falses = * new vector<int>(codigo.obtenRef()+1);
                *$$ = makecomparison($1->str,*$2,$3->str);  
@@ -323,8 +323,8 @@ expresion : expresion TEQUAL expresion
             }
           | expresion TMENOREQ expresion
             {
-               $$->str= "";
                $$= new expresionstruct;
+               $$->str= "";
                $$->trues = * new vector<int>(codigo.obtenRef());
                $$->falses = * new vector<int>(codigo.obtenRef()+1);
                *$$ = makecomparison($1->str,*$2,$3->str); 
@@ -333,8 +333,8 @@ expresion : expresion TEQUAL expresion
             }
           | expresion TNOTEQUAL expresion
             {
-               $$->str= "";
                $$= new expresionstruct;
+               $$->str= "";
                $$->trues = * new vector<int>(codigo.obtenRef());
                $$->falses = * new vector<int>(codigo.obtenRef()+1);
                *$$ = makecomparison($1->str,*$2,$3->str); 
@@ -346,8 +346,6 @@ expresion : expresion TEQUAL expresion
                $$= new expresionstruct;
                $$->trues = * new vector<int>;
                $$->falses = * new vector<int>;
-               
-               //$$->tipo = "operación aritmética";
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
@@ -357,8 +355,6 @@ expresion : expresion TEQUAL expresion
                $$= new expresionstruct;
                $$->trues = * new vector<int>;
                $$->falses = * new vector<int>;
-               
-               //$$->tipo = "operación aritmética";
                *$$ = makearithmetic($1->str,*$2,$3->str); 
 
                delete $1; delete $3; 
@@ -368,9 +364,7 @@ expresion : expresion TEQUAL expresion
                $$= new expresionstruct;
                $$->trues = * new vector<int>;
                $$->falses = * new vector<int>;
-               
-               *$$ = makearithmetic($1->str,*$2,$3->str); 
-
+               *$$ = makearithmetic($1->str,*$2,$3->str);
                delete $1; delete $3; 
             }
           | expresion TDIV expresion
@@ -378,9 +372,7 @@ expresion : expresion TEQUAL expresion
                $$= new expresionstruct;
                $$->trues = * new vector<int>;
                $$->falses = * new vector<int>;
-               
                *$$ = makearithmetic($1->str,*$2,$3->str); 
-
                delete $1; delete $3; 
             }
           | TIDENTIFIER
@@ -396,7 +388,6 @@ expresion : expresion TEQUAL expresion
                $$->trues = * new vector<int>;
                $$->falses = * new vector<int>;
                $$->str = *$1;
-               //$$->tipo= "Integer";
             }
           | TFLOAT
             {
@@ -404,7 +395,6 @@ expresion : expresion TEQUAL expresion
                $$->trues = * new vector<int>;
                $$->falses = * new vector<int>;
                $$->str = *$1;
-               //$$->tipo= "Float";
             }
           | TPARENI expresion TPAREND
             {
@@ -420,8 +410,7 @@ expresionstruct makecomparison(std::string &s1, std::string &s2, std::string &s3
   expresionstruct tmp ; 
 
   tmp.trues.push_back(codigo.obtenRef()) ;
-  tmp.falses.push_back(codigo.obtenRef()+1) ;
-
+  tmp.falses.push_back(codigo.obtenRef()+1);
   codigo.anadirInstruccion("if " + s1 + " " + s2 + " " + s3 + " goto") ;
   codigo.anadirInstruccion("goto") ;
   return tmp ;
