@@ -245,7 +245,7 @@ sentencia : variable TASSIG expresion TSEMIC
                codigo.anadirInstruccion("goto");
                $$->exits = * new vector<int>;
                
-               vector<int> tmp1 ; tmp1.push_back(codigo.obtenRef()) ;
+               vector<int> tmp1 ; tmp1.push_back($3) ;
                $$->continues = tmp1;
             }
           | RREAD TPARENI variable TPAREND TSEMIC
